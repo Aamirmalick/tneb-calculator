@@ -1,5 +1,5 @@
 # Use official Node.js image
-FROM node:18-alpine
+FROM node:18-alpine AS build
 
 # Set working directory
 WORKDIR /app
@@ -16,12 +16,15 @@ RUN npm install
 # Copy project files
 COPY . .
 
+# Debug: list files in /app/src to verify App.js vs app.js
+RUN echo "====== SRC DIRECTORY LIST ======" && ls -l /app/src && echo "================================"
+
 # Build the React app
 RUN npm run build
 
 # Serve app with a lightweight server (nginx)
 FROM nginx:alpine
-COPY --from=0 /app/build /usr/share/nginx/html
+COPY --from=build /app/build /usr/share/nginx/html
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
