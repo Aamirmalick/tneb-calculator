@@ -1,30 +1,32 @@
-# Use official Node.js image
+# Stage 1: Build React app
 FROM node:18-alpine AS build
 
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json (or yarn.lock / pnpm-lock.yaml)
+# Copy package files
 COPY package*.json ./
 
-# Install React 18 explicitly
-RUN npm install react@18.2.0 react-dom@18.2.0
-
-# Install all other dependencies
+# Install dependencies (including devDependencies like Tailwind)
 RUN npm install
 
-# Copy project files
+# Copy all source files
 COPY . .
 
-# Debug: list files in /app/src to verify App.js vs app.js
-RUN echo "====== SRC DIRECTORY LIST ======" && ls -l /app/src && echo "================================"
+# Run Prettier to auto-fix formatting issues before build
+RUN npx prettier --write "src/**/*.{js,jsx,ts,tsx,css}"
 
-# Build the React app
+# Build the app
 RUN npm run build
 
-# Serve app with a lightweight server (nginx)
+# Stage 2: Serve with Nginx
 FROM nginx:alpine
+
+# Copy build output to Nginx html folder
 COPY --from=build /app/build /usr/share/nginx/html
 
+# Expose port 80
 EXPOSE 80
+
+# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
