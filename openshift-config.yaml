@@ -1,0 +1,190 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: tneb-calculator
+  namespace: m-aamirmalick-dev
+spec:
+  lookupPolicy:
+    local: true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tneb-calculator-config
+  namespace: m-aamirmalick-dev
+data:
+  NODE_ENV: "production"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tneb-calculator-secret
+  namespace: m-aamirmalick-dev
+type: Opaque
+data:
+  api-key: YXBpS2V5MTIz   # base64 encoded "apiKey123"
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: tneb-calculator-build
+  namespace: m-aamirmalick-dev
+spec:
+  source:
+    type: Git
+    git:
+      uri: "https://github.com/Aamirmalick/tneb-calculator.git"
+      ref: main
+    contextDir: /
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: "tneb-calculator:latest"
+  triggers:
+    - type: ConfigChange
+    - type: ImageChange
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tneb-calculator
+  namespace: m-aamirmalick-dev
+  labels:
+    app: tneb-calculator
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tneb-calculator
+  template:
+    metadata:
+      labels:
+        app: tneb-calculator
+    spec:
+      containers:
+        - name: tneb-calculator
+          image: image-registry.openshift-image-registry.svc:5000/m-aamirmalick-dev/tneb-calculator:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: tneb-calculator-config
+            - secretRef:
+                name: tneb-calculator-secret
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh","-c","sleep 5"]
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tneb-calculator-service
+  namespace: m-aamirmalick-dev
+spec:
+  selector:
+    app: tneb-calculator
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: tneb-calculator-route
+  namespace: m-aamirmalick-dev
+  annotations:
+    haproxy.router.openshift.io/timeout: 5m
+spec:
+  to:
+    kind: Service
+    name: tneb-calculator-service
+  port:
+    targetPort: 80
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: tneb-calculator-hpa
+  namespace: m-aamirmalick-dev
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: tneb-calculator
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: tneb-calculator-pdb
+  namespace: m-aamirmalick-dev
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: tneb-calculator
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-same-namespace
+  namespace: m-aamirmalick-dev
+spec:
+  podSelector: {}
+  ingress:
+    - from:
+        - podSelector: {}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: tneb-calculator-monitor
+  namespace: m-aamirmalick-dev
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: tneb-calculator
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
