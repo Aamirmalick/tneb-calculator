@@ -1,4 +1,6 @@
+# ============================
 # Stage 1: Build React app
+# ============================
 FROM node:18-alpine AS build
 
 # Set working directory
@@ -7,7 +9,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies (including devDependencies like Tailwind)
+# Install dependencies (devDependencies included for Tailwind/Prettier)
 RUN npm install
 
 # Copy all source files
@@ -16,10 +18,13 @@ COPY . .
 # Run Prettier to auto-fix formatting issues before build
 RUN npx prettier --write "src/**/*.{js,jsx,ts,tsx,css}"
 
-# Build the app
+# Build the React app
 RUN npm run build
 
+
+# ============================
 # Stage 2: Serve with Nginx
+# ============================
 FROM nginx:alpine
 
 # Copy build output to Nginx html folder
@@ -30,11 +35,14 @@ RUN mkdir -p /var/cache/nginx /var/run /var/log/nginx \
     && chgrp -R 0 /var/cache/nginx /var/run /var/log/nginx /etc/nginx /usr/share/nginx/html \
     && chmod -R g+rwX /var/cache/nginx /var/run /var/log/nginx /etc/nginx /usr/share/nginx/html
 
-# Change Nginx to listen on 8080 instead of 80
+# Change Nginx to listen on port 8080 instead of 80 (required for OpenShift)
 RUN sed -i 's/listen       80;/listen       8080;/g' /etc/nginx/conf.d/default.conf
 
 # Expose port 8080
 EXPOSE 8080
+
+# Run as non-root (OpenShift injects a random UID automatically)
+USER 1001
 
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
