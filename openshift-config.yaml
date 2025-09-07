@@ -56,7 +56,7 @@ metadata:
   labels:
     app: tneb-calculator
 spec:
-  replicas: 3
+  replicas: 2   # always start with 2 pods
   selector:
     matchLabels:
       app: tneb-calculator
@@ -69,7 +69,8 @@ spec:
         - name: tneb-calculator
           image: image-registry.openshift-image-registry.svc:5000/m-aamirmalick-dev/tneb-calculator:latest
           ports:
-            - containerPort: 8080
+            - name: http
+              containerPort: 8080
           envFrom:
             - configMapRef:
                 name: tneb-calculator-config
@@ -101,6 +102,15 @@ spec:
           securityContext:
             runAsNonRoot: true
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: cache-volume
+              mountPath: /var/cache/nginx
+      volumes:
+        - name: cache-volume
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -111,7 +121,8 @@ spec:
   selector:
     app: tneb-calculator
   ports:
-    - port: 80
+    - name: http
+      port: 80
       targetPort: 8080
 ---
 apiVersion: route.openshift.io/v1
@@ -126,7 +137,7 @@ spec:
     kind: Service
     name: tneb-calculator-service
   port:
-    targetPort: 80
+    targetPort: http
   tls:
     termination: edge
     insecureEdgeTerminationPolicy: Redirect
