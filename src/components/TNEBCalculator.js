@@ -539,33 +539,6 @@ const TNEBCalculator = () => {
                   </div>
                 </div>
 
-                {/* Connection Type */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Connection Type
-                  </label>
-                  <div className="flex gap-2">
-                    {['LT', 'HT'].map((type) => (
-                      <button
-                        key={type}
-                        onClick={() => setConnectionType(type)}
-                        className={`flex-1 p-3 rounded-lg border-2 transition-all duration-200 ${
-                          connectionType === type
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="flex items-center justify-center gap-2">
-                          <Zap className={`w-4 h-4 ${type === 'HT' ? 'text-red-500' : 'text-yellow-500'}`} />
-                          <span className="text-sm font-medium">
-                            {type} ({type === 'LT' ? 'Low' : 'High'} Tension)
-                          </span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Units Input */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
