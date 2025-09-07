@@ -827,7 +827,8 @@ const TNEBCalculator = () => {
                       <div>
                         <h4 className="font-medium text-yellow-800">Important Notes</h4>
                         <ul className="text-sm text-yellow-700 mt-1 space-y-1">
-                          <li>• Fixed charges and electricity duty apply additionally</li>
+                          <li>• Amount shown is only energy charges based on consumption</li>
+                          <li>• Fixed charges and electricity duty are not included</li>
                           <li>• Rates may vary for different consumer categories</li>
                           <li>• Slab rates are cumulative based on total monthly consumption</li>
                           <li>• Please verify with official TNEB tariff schedule</li>
