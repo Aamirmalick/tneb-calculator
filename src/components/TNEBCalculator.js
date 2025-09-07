@@ -25,9 +25,13 @@ const consumerTypes = [
 
 const domesticTariff = [
   { from: 0, to: 100, rate: 0, description: 'First 100 units (Free)' },
-  { from: 101, to: 200, rate: 2.5, description: '101-200 units' },
-  { from: 201, to: 500, rate: 4.0, description: '201-500 units' },
-  { from: 501, to: Infinity, rate: 6.5, description: 'Above 500 units' },
+  { from: 101, to: 200, rate: 2.35, description: '101-200 units' },
+  { from: 201, to: 400, rate: 4.70, description: '201-400 units' },
+  { from: 401, to: 500, rate: 6.30, description: '401-500 units' },
+  { from: 501, to: 600, rate: 8.40, description: '501-600 units' },
+  { from: 601, to: 800, rate: 9.45, description: '601-800 units' },
+  { from: 801, to: 1000, rate: 10.50, description: '801-1,000 units' },
+  { from: 1001, to: Infinity, rate: 11.55, description: 'Above 1,000 units' },
 ];
 
 const TNEBCalculator = () => {
@@ -75,58 +79,259 @@ const TNEBCalculator = () => {
       let breakdown = [];
       
       if (consumerType === 'domestic') {
-        let remainingUnits = parsedUnits;
+        // Apply TNEB slab rates based on total consumption
+        const slabCalculation = (totalUnits) => {
+          let cost = 0;
+          let breakdown = [];
+          
+          if (totalUnits <= 100) {
+            // Up to 100 units - Free
+            breakdown.push({
+              units: totalUnits,
+              rate: 0,
+              amount: 0,
+              description: 'First 100 units (Free)',
+              isFree: true
+            });
+          } else if (totalUnits <= 200) {
+            // Up to 200 units - Free for first 100, ₹2.35 for 101-200
+            breakdown.push({
+              units: 100,
+              rate: 0,
+              amount: 0,
+              description: 'First 100 units (Free)',
+              isFree: true
+            });
+            const units101to200 = totalUnits - 100;
+            const amount101to200 = units101to200 * 2.35;
+            breakdown.push({
+              units: units101to200,
+              rate: 2.35,
+              amount: amount101to200,
+              description: '101-200 units'
+            });
+            cost = amount101to200;
+          } else if (totalUnits <= 400) {
+            // Up to 400 units - Free for first 100, ₹4.70 for 101-400
+            breakdown.push({
+              units: 100,
+              rate: 0,
+              amount: 0,
+              description: 'First 100 units (Free)',
+              isFree: true
+            });
+            const units101to400 = totalUnits - 100;
+            const amount101to400 = units101to400 * 4.70;
+            breakdown.push({
+              units: units101to400,
+              rate: 4.70,
+              amount: amount101to400,
+              description: '101-400 units'
+            });
+            cost = amount101to400;
+          } else if (totalUnits <= 500) {
+            // Up to 500 units
+            breakdown.push({
+              units: 100,
+              rate: 0,
+              amount: 0,
+              description: 'First 100 units (Free)',
+              isFree: true
+            });
+            const amount101to400 = 300 * 4.70;
+            breakdown.push({
+              units: 300,
+              rate: 4.70,
+              amount: amount101to400,
+              description: '101-400 units'
+            });
+            const units401to500 = totalUnits - 400;
+            const amount401to500 = units401to500 * 6.30;
+            breakdown.push({
+              units: units401to500,
+              rate: 6.30,
+              amount: amount401to500,
+              description: '401-500 units'
+            });
+            cost = amount101to400 + amount401to500;
+          } else if (totalUnits <= 600) {
+            // Up to 600 units
+            breakdown.push({
+              units: 100,
+              rate: 0,
+              amount: 0,
+              description: 'First 100 units (Free)',
+              isFree: true
+            });
+            const amount101to400 = 300 * 4.70;
+            breakdown.push({
+              units: 300,
+              rate: 4.70,
+              amount: amount101to400,
+              description: '101-400 units'
+            });
+            const amount401to500 = 100 * 6.30;
+            breakdown.push({
+              units: 100,
+              rate: 6.30,
+              amount: amount401to500,
+              description: '401-500 units'
+            });
+            const units501to600 = totalUnits - 500;
+            const amount501to600 = units501to600 * 8.40;
+            breakdown.push({
+              units: units501to600,
+              rate: 8.40,
+              amount: amount501to600,
+              description: '501-600 units'
+            });
+            cost = amount101to400 + amount401to500 + amount501to600;
+          } else if (totalUnits <= 800) {
+            // Up to 800 units
+            breakdown.push({
+              units: 100,
+              rate: 0,
+              amount: 0,
+              description: 'First 100 units (Free)',
+              isFree: true
+            });
+            const amount101to400 = 300 * 4.70;
+            breakdown.push({
+              units: 300,
+              rate: 4.70,
+              amount: amount101to400,
+              description: '101-400 units'
+            });
+            const amount401to500 = 100 * 6.30;
+            breakdown.push({
+              units: 100,
+              rate: 6.30,
+              amount: amount401to500,
+              description: '401-500 units'
+            });
+            const amount501to600 = 100 * 8.40;
+            breakdown.push({
+              units: 100,
+              rate: 8.40,
+              amount: amount501to600,
+              description: '501-600 units'
+            });
+            const units601to800 = totalUnits - 600;
+            const amount601to800 = units601to800 * 9.45;
+            breakdown.push({
+              units: units601to800,
+              rate: 9.45,
+              amount: amount601to800,
+              description: '601-800 units'
+            });
+            cost = amount101to400 + amount401to500 + amount501to600 + amount601to800;
+          } else if (totalUnits <= 1000) {
+            // Up to 1000 units
+            breakdown.push({
+              units: 100,
+              rate: 0,
+              amount: 0,
+              description: 'First 100 units (Free)',
+              isFree: true
+            });
+            const amount101to400 = 300 * 4.70;
+            breakdown.push({
+              units: 300,
+              rate: 4.70,
+              amount: amount101to400,
+              description: '101-400 units'
+            });
+            const amount401to500 = 100 * 6.30;
+            breakdown.push({
+              units: 100,
+              rate: 6.30,
+              amount: amount401to500,
+              description: '401-500 units'
+            });
+            const amount501to600 = 100 * 8.40;
+            breakdown.push({
+              units: 100,
+              rate: 8.40,
+              amount: amount501to600,
+              description: '501-600 units'
+            });
+            const amount601to800 = 200 * 9.45;
+            breakdown.push({
+              units: 200,
+              rate: 9.45,
+              amount: amount601to800,
+              description: '601-800 units'
+            });
+            const units801to1000 = totalUnits - 800;
+            const amount801to1000 = units801to1000 * 10.50;
+            breakdown.push({
+              units: units801to1000,
+              rate: 10.50,
+              amount: amount801to1000,
+              description: '801-1,000 units'
+            });
+            cost = amount101to400 + amount401to500 + amount501to600 + amount601to800 + amount801to1000;
+          } else {
+            // Above 1000 units
+            breakdown.push({
+              units: 100,
+              rate: 0,
+              amount: 0,
+              description: 'First 100 units (Free)',
+              isFree: true
+            });
+            const amount101to400 = 300 * 4.70;
+            breakdown.push({
+              units: 300,
+              rate: 4.70,
+              amount: amount101to400,
+              description: '101-400 units'
+            });
+            const amount401to500 = 100 * 6.30;
+            breakdown.push({
+              units: 100,
+              rate: 6.30,
+              amount: amount401to500,
+              description: '401-500 units'
+            });
+            const amount501to600 = 100 * 8.40;
+            breakdown.push({
+              units: 100,
+              rate: 8.40,
+              amount: amount501to600,
+              description: '501-600 units'
+            });
+            const amount601to800 = 200 * 9.45;
+            breakdown.push({
+              units: 200,
+              rate: 9.45,
+              amount: amount601to800,
+              description: '601-800 units'
+            });
+            const amount801to1000 = 200 * 10.50;
+            breakdown.push({
+              units: 200,
+              rate: 10.50,
+              amount: amount801to1000,
+              description: '801-1,000 units'
+            });
+            const unitsAbove1000 = totalUnits - 1000;
+            const amountAbove1000 = unitsAbove1000 * 11.55;
+            breakdown.push({
+              units: unitsAbove1000,
+              rate: 11.55,
+              amount: amountAbove1000,
+              description: 'Above 1,000 units'
+            });
+            cost = amount101to400 + amount401to500 + amount501to600 + amount601to800 + amount801to1000 + amountAbove1000;
+          }
+          
+          return { cost, breakdown };
+        };
         
-        // First 100 units free
-        const freeUnits = Math.min(remainingUnits, 100);
-        breakdown.push({
-          units: freeUnits,
-          rate: 0,
-          amount: 0,
-          description: 'First 100 units (Free)',
-          isFree: true
-        });
-        remainingUnits -= freeUnits;
-        
-        // 101-200 units
-        if (remainingUnits > 0) {
-          const tierUnits = Math.min(remainingUnits, 100);
-          const tierAmount = tierUnits * 2.5;
-          breakdown.push({
-            units: tierUnits,
-            rate: 2.5,
-            amount: tierAmount,
-            description: '101-200 units'
-          });
-          energyCost += tierAmount;
-          remainingUnits -= tierUnits;
-        }
-        
-        // 201-500 units
-        if (remainingUnits > 0) {
-          const tierUnits = Math.min(remainingUnits, 300);
-          const tierAmount = tierUnits * 4.0;
-          breakdown.push({
-            units: tierUnits,
-            rate: 4.0,
-            amount: tierAmount,
-            description: '201-500 units'
-          });
-          energyCost += tierAmount;
-          remainingUnits -= tierUnits;
-        }
-        
-        // Above 500 units
-        if (remainingUnits > 0) {
-          const tierAmount = remainingUnits * 6.5;
-          breakdown.push({
-            units: remainingUnits,
-            rate: 6.5,
-            amount: tierAmount,
-            description: 'Above 500 units'
-          });
-          energyCost += tierAmount;
-        }
+        const result = slabCalculation(parsedUnits);
+        energyCost = result.cost;
+        breakdown = result.breakdown;
       } else {
         // Simplified calculation for other consumer types
         const rate = consumerType === 'commercial' ? 7.5 : 
@@ -592,7 +797,7 @@ const TNEBCalculator = () => {
                     <TrendingUp className="w-5 h-5 text-blue-600" />
                     <h3 className="text-lg font-semibold">Tariff Information</h3>
                   </div>
-                  <p className="text-gray-600 text-sm mt-1">Current electricity rates for domestic consumers</p>
+                  <p className="text-gray-600 text-sm mt-1">Latest July 1, 2024 revised tariff rates for domestic consumers</p>
                 </div>
                 
                 <div className="p-6">
@@ -624,6 +829,7 @@ const TNEBCalculator = () => {
                         <ul className="text-sm text-yellow-700 mt-1 space-y-1">
                           <li>• Fixed charges and electricity duty apply additionally</li>
                           <li>• Rates may vary for different consumer categories</li>
+                          <li>• Slab rates are cumulative based on total monthly consumption</li>
                           <li>• Please verify with official TNEB tariff schedule</li>
                         </ul>
                       </div>
@@ -637,7 +843,7 @@ const TNEBCalculator = () => {
 
         {/* Footer */}
         <div className="text-center text-gray-600 text-sm">
-          * Rates are subject to change. Please verify with official TNEB tariff schedule.
+          * Based on TNEB tariff rates effective from July 1, 2024. Rates are subject to change.
         </div>
       </div>
     </div>
