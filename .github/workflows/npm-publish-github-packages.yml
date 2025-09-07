@@ -1,0 +1,72 @@
+name: Frontend React App
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install OpenShift CLI
+        run: |
+          curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz
+          tar -xvf oc.tar.gz
+          sudo mv oc /usr/local/bin/
+          oc version
+
+      - name: Login to OpenShift
+        run: |
+          oc login ${{ secrets.OPENSHIFT_SERVER }} --token=${{ secrets.OPENSHIFT_TOKEN }} --insecure-skip-tls-verify=true
+          oc project ${{ secrets.CLUSTER_NAME }}
+
+      - name: Trigger OpenShift Build
+        run: |
+          oc apply -f deploy/openshift-config.yaml
+          oc start-build tneb-calculator-build --follow -n ${{ secrets.CLUSTER_NAME }}
+
+      - name: Rollout Deployment
+        run: |
+          oc rollout restart deployment/tneb-calculator
+          oc rollout status deployment/tneb-calculator --timeout=180s
+
+      - name: Send success email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: aamirmalick2024@gmail.com
+          password: fqjj pwxq dhwb fczq
+          subject: ✅ Build Succeeded
+          to: m.aamirmalick@gmail.com
+          from: GitHub Actions <aamirmalick2024@gmail.com>
+          body: |
+            ✅ Build succeeded on ${{ github.repository }}
+            🔢 Commit SHA: ${{ github.sha }}
+            🧑‍💻 Committed by: ${{ github.actor }}
+            📝 Commit message:${{ github.event.head_commit.message }}
+          attachments: build.log
+          
+
+      - name: Send failure email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: aamirmalick2024@gmail.com
+          password: fqjj pwxq dhwb fczq
+          subject: ❌ Build Failed
+          to: m.aamirmalick@gmail.com
+          from: GitHub Actions <aamirmalick2024@gmail.com>
+          body: |
+            Build failed on ${{ github.repository }} 
+            🔢 Commit SHA: ${{ github.sha }}
+            🧑‍💻 Committed by: ${{ github.actor }}
+            📝 Commit message:${{ github.event.head_commit.message }}
+          attachments: build.log
