@@ -26,7 +26,7 @@ jobs:
 
       - name: Trigger OpenShift Build
         run: |
-          oc apply -f deploy/openshift-config.yaml
+          oc apply -f openshift-config.yaml
           oc start-build tneb-calculator-build --follow -n ${{ secrets.CLUSTER_NAME }}
 
       - name: Rollout Deployment
